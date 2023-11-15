@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
+  ********************************************************************************
   * @file           : main.c
   * @brief          : Main program body
-  ******************************************************************************
+  ********************************************************************************
   * @attention
   *
   * Copyright (c) 2023 STMicroelectronics.
@@ -134,10 +134,25 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  // HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   int cnt = 0;
   uint32_t prevTick = 0;
+  uint32_t prevDebugTick = 0;
   const int CLOCK_FREQ = 84000000;
+
+  int m_sum_TMP = 0;
+  int m_sum_LIGHT = 0;
+  int m_sum_FSR = 0;
+
+  int m_avg_TMP = 0;
+  int m_avg_LIGHT = 0;
+  int m_avg_FSR = 0;
+
+  const int m_avg_cnt = 5; // number of values to keep track of for moving average
+
+  int val_TMP[5] = {0};
+  int val_LIGHT[5] = {0};
+  int val_FSR[5] = {0};
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -148,45 +163,47 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  uint32_t tick = HAL_GetTick();
-	  if (tick - prevTick > 500) {
+
+	  if (tick - prevTick > 100) {
+		  prevTick = tick;
+		  cnt++;
+		  cnt %= m_avg_cnt;
 
 		  ADC_Select_CH0();
 		  HAL_ADC_Start(&hadc1);
-		  HAL_ADC_PollForConversion(&hadc1, 1000);
-		  int a = HAL_ADC_GetValue(&hadc1);
+		  HAL_ADC_PollForConversion(&hadc1, 1);
+		  int tempval = HAL_ADC_GetValue(&hadc1);
+		  m_sum_FSR += tempval - val_FSR[cnt];
+		  val_FSR[cnt] = tempval;
 		  HAL_ADC_Stop(&hadc1);
 
 		  ADC_Select_CH4();
 		  HAL_ADC_Start(&hadc1);
-		  HAL_ADC_PollForConversion(&hadc1, 1000);
-		  int b = HAL_ADC_GetValue(&hadc1);
+		  HAL_ADC_PollForConversion(&hadc1, 1);
+		  tempval = HAL_ADC_GetValue(&hadc1);
+		  m_sum_TMP += tempval - val_TMP[cnt];
+		  val_TMP[cnt] = tempval;
 		  HAL_ADC_Stop(&hadc1);
 
 		  ADC_Select_CH8();
 		  HAL_ADC_Start(&hadc1);
-		  HAL_ADC_PollForConversion(&hadc1, 1000);
-		  int c = HAL_ADC_GetValue(&hadc1);
+		  HAL_ADC_PollForConversion(&hadc1, 1);
+		  tempval = HAL_ADC_GetValue(&hadc1);
+		  m_sum_LIGHT += tempval - val_LIGHT[cnt];
+		  val_LIGHT[cnt] = tempval;
 		  HAL_ADC_Stop(&hadc1);
 
-		  bool B2 = HAL_GPIO_ReadPin(B2_GPIO_Port, B2_Pin);
-		  bool B3 = HAL_GPIO_ReadPin(B3_GPIO_Port, B3_Pin);
-
-		  printf("FSR: %d TMP: %d LIGHT: %d B2: %d B3: %d\n", a, b, c, B2, B3);
-
-		  prevTick = tick;
-		  cnt += 1;
-		  cnt %= 4;
-		  HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin,cnt == 0);
-		  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,cnt == 1);
-		  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin,cnt == 2);
-		  HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin,cnt == 3);
-
-		  int freq = (cnt + 1)*120;
-		  __HAL_TIM_SET_AUTORELOAD(&htim2, CLOCK_FREQ / freq);
-		  __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, CLOCK_FREQ / freq / 2);
-		  __HAL_TIM_SET_COUNTER(&htim2, 0);
+		  m_avg_TMP = m_sum_TMP / m_avg_cnt;
+		  m_avg_LIGHT = m_sum_LIGHT / m_avg_cnt;
+		  m_avg_FSR = m_sum_FSR / m_avg_cnt;
 	  }
 
+	  if (tick - prevDebugTick > 500) {
+		  prevDebugTick = tick;
+		  bool B2 = HAL_GPIO_ReadPin(B2_GPIO_Port, B2_Pin);
+		  bool B3 = HAL_GPIO_ReadPin(B3_GPIO_Port, B3_Pin);
+		  printf("FSR: %d TMP: %d LIGHT: %d B2: %d B3: %d\n", m_avg_FSR, m_avg_TMP, m_avg_LIGHT, B2, B3);
+	  }
   }
   /* USER CODE END 3 */
 }
