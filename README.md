@@ -7,8 +7,8 @@ The purpose of this device is to detect and alert the user when milk has gone ba
 
 ## Detailed Overview
 For a deeper dive into this project and its purpose, please look at the following documents. These documents were created in compliance with the ECE 198 course requirements.
-- [ ] [Project Proposal](https://github.com/Rongbin99/FreshGuard/blob/main/ECE%20198%20Project%20Proposal%20Revised.pdf)
-- [ ] [Design Document](https://github.com/Rongbin99/FreshGuard/blob/main/ECE%20198%20Design%20Document.pdf)
+- [X] [Project Proposal](https://github.com/Rongbin99/FreshGuard/blob/main/ECE%20198%20Project%20Proposal%20Revised.pdf)
+- [X] [Design Document](https://github.com/Rongbin99/FreshGuard/blob/main/ECE%20198%20Design%20Document.pdf)
 
 > [!IMPORTANT]
 > This project was done for the ECE 198: Project Studio course at the University of Waterloo. 
